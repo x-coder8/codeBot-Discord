@@ -408,7 +408,7 @@ async def on_member_join(member):
         # Mensagem padrão caso a IA falhe
         default_message = (
             f"Hey... {member.mention}, bem-vindo/a ao Discord dos **#code.lab**! "
-            "Para saberes mais sobre nós, passa na sala <#480009597147414528>."
+            "Para saberes mais sobre nós, passa na sala <#4xxxxxxxxxxxxxxx>."
         )
 
         # Enviar mensagem gerada pela IA ou padrão
