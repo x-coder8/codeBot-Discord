@@ -59,7 +59,7 @@ LOG_CHANNEL_ID = 1xxxxxxxxxxxxxxxxxx  # Canal Admin log´s
 BOT_NAME = ["uB|codeBot","ub|codebot", "codebot", "CodeBot", "CODEBOT"]
 
 # Mensagens estáticas de fallback
-STATIC_WELCOME_MESSAGE = "hey... , {member.mention}, bem-vindo/a ao Discord dos **#code.lab**! Para saberes mais sobre nós, passa na sala <#1247854979004235799>"
+STATIC_WELCOME_MESSAGE = "hey... , {member.mention}, bem-vindo/a ao Discord dos **#code.lab**! Para saberes mais sobre nós, passa na sala <#1xxxxxxxxxxxxxx>"
 STATIC_MENTION_RESPONSE = "Olá! Disseste o meu nome? Desculpa não poder dar atenção, neste momento estou um pouco ocupado... "
 
 # Lista de jogos predefinidos para a atividade do bot
