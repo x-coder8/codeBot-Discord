@@ -2,7 +2,7 @@
 
 Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O bot oferece funcionalidades como envio de mensagens anónimas, integração com IA (Gemini API), salas de voz dinâmicas, e muito mais.
 
-**Discord #code.lab** (https://discord.gg/RNTCvU9C)
+**Discord #code.lab** ( https://discord.gg/RNTCvU9C )
 
 ## Funcionalidades Principais
 
