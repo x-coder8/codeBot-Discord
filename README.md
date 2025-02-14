@@ -18,9 +18,9 @@ Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O b
 1. **Configuração**:
    - Clone este repositório:
      ```bash
-     git clone https://github.com/seu-usuario/nome-do-repositorio.git
+     git clone https://github.com/x-coder8/codeBot-Discord.git
      ```
-   - Instale as dependências necessárias
+   - Instale as Bibliotecas necessárias
 
    - Configure as variáveis de ambiente no arquivo `.env` (veja `.env.example` para referência).
 
