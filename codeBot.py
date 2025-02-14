@@ -89,7 +89,7 @@ async def gerar_frase_desafiante():
         frase = response.text.strip() if response.text else "Não consegui gerar uma frase."
     except Exception as e:
         logger.error(f"Erro ao gerar frase: {e}")
-        frase = "O silêncio na guerra também pode ser uma mensagem."
+        frase = "O silêncio na programação também pode ser uma mensagem."
 
     return f"🔹 Memórias de **{jogo}**: *{frase}*"
 
