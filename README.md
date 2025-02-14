@@ -11,6 +11,7 @@ Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O b
 - **Atividades Periódicas**: Muda a atividade do bot periodicamente para manter o servidor dinâmico.
 - **Envio de frases enigmáticas**: Envia frases sobre linguagens de programação ou jogos à escolha.
 - **Mensagem de bem-vindo**: Envia mensagem de bem-vindo a novos membros.
+- **Mensagens de actividade e logs**: Envia mensagens para os canais específicos.
 
 ## Como Usar
 
