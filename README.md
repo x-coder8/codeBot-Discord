@@ -27,7 +27,7 @@ Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O b
 2. **Executando o Bot**:
    - Execute o bot com o comando:
      ```bash
-     codeBot.py
+     python codeBot.py
      ```
 
 3. **Comandos Disponíveis**:
