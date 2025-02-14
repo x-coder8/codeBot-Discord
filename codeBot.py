@@ -39,8 +39,8 @@ bot = commands.Bot(command_prefix='', intents=intents)
 
 # IDs e nomes das salas de voz (constantes)
 VOICE_CHANNEL_IDS = [
-    1250840908669255721, 1250841050159780042,
-    513146477615251480, 1248672252757545000
+    1xxxxxxxxxxxxxxx, 1xxxxxxxxxxxxxxxxxxxx,
+    5xxxxxxxxxxxxxxxxx, 1xxxxxxxxxxxxxxxxxx
 ]
 VOICE_CHANNEL_NAMES = [
     "Chill Out 1", "Chill Out 2",
@@ -51,9 +51,9 @@ VOICE_CHANNEL_NAMES = [
 voice_channel_mapping = dict(zip(VOICE_CHANNEL_IDS, VOICE_CHANNEL_NAMES))
 
 # IDs dos canais de texto e log (constantes)
-TEXT_CHANNEL_ID = 514818554487504896  # Canal activity - texto
-MAIN_CHANNEL_ID = 513146477615251476  # Canal Lobby
-LOG_CHANNEL_ID = 1250846054291865612  # Canal Admin log´s
+TEXT_CHANNEL_ID = 5xxxxxxxxxxxxxxxxx  # Canal activity - texto
+MAIN_CHANNEL_ID = 5xxxxxxxxxxxxxxxxx  # Canal Lobby
+LOG_CHANNEL_ID = 1xxxxxxxxxxxxxxxxxx  # Canal Admin log´s
 
 # Nome do bot (constantes)
 BOT_NAME = ["uB|codeBot","ub|codebot", "codebot", "CodeBot", "CODEBOT"]
@@ -401,7 +401,7 @@ async def on_member_join(member):
     channel = bot.get_channel(MAIN_CHANNEL_ID)  # Obtém o canal Lobby
     if channel:
         prompt = (
-            f"imagina-te o codeBot, mestre da programação. Escreve uma pequena frase de bem vindo/a em português de Portugal, a tratar por tu, como neste exemplo:'Olá , {member.mention}, bem-vindo/a ao Discord dos **#code.lab**! Para saberes mais sobre nós, passa na sala <#480009597147414528>.'"
+            f"imagina-te o codeBot, mestre da programação. Escreve uma pequena frase de bem vindo/a em português de Portugal, a tratar por tu, como neste exemplo:'Olá , {member.mention}, bem-vindo/a ao Discord dos **#code.lab**! Para saberes mais sobre nós, passa na sala <#4xxxxxxxxxxx>.'"
         )
         ai_message = await generate_ai_message(prompt)
         
