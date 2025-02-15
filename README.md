@@ -35,8 +35,8 @@ Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O b
 3. **Comandos Disponíveis**:
    - `/ping`: Verifica a latência do bot.
    - `/coin`: Lança uma moeda virtual.
-   - `/mem`: Envia uma frase enigmática sobre um tema, gerada por AI
-   - `/say`: Envia uma mensagem anónima (apenas para administradores).
+   - `/mem`: Envia uma frase enigmática sobre um tema, gerada por AI.
+   - `/say`: Envia uma mensagem anónima, com ou sem imagem. (apenas para administradores).
 
 ## Requisitos
 
