@@ -68,11 +68,11 @@ BOT_NAME = ["uB|codeBot", "ub|codebot", "codebot", "CodeBot", "CODEBOT"]
 
 # Mensagens estáticas de fallback
 STATIC_WELCOME_MESSAGE = "hey... , {member.mention}, bem-vindo/a ao Discord dos **#code.lab**! Para saberes mais sobre nós, passa na sala <#{os.getenv('INFO_CHANNEL_ID')}>"
-STATIC_MENTION_RESPONSE = "Olá! Disseste o meu nome? Desculpa não poder dar atenção, neste momento estou um pouco ocupado... "
+STATIC_MENTION_RESPONSE = "Olá, disseste o meu nome? Desculpa não poder dar atenção, neste momento estou um pouco ocupado... "
 
 # Lista de jogos predefinidos para a atividade do bot
-GAMES_LIST = ["Python", "Java", "Java Script", "Visual Studio Code", "PHP"]
-GAMES_LIST2 = ["Python", "Java", "Java Script", "C++", "PHP"]
+GAMES_LIST = ["Python", "Rust", "Java Script", "Visual Studio Code", "PHP"]
+GAMES_LIST2 = ["Python", "Rust", "Java Script", "C++", "PHP"]
 
 # Função para gerar mensagem dinâmica com IA
 async def generate_ai_message(prompt):
@@ -85,11 +85,11 @@ async def generate_ai_message(prompt):
         logger.error(f"Erro ao gerar mensagem com IA: {e}")
         return None
 
-# Função para gerar uma frase desafiante sobre um jogo
+# Função para gerar uma frase curiosa sobre uma linguagem
 async def gerar_frase_desafiante():
     """Gera uma frase desafiante sobre uma linguagem aleatória."""
-    jogo = random.choice(GAMES_LIST2)  # Escolhe um jogo aleatoriamente
-    prompt = f"Uma curta frase em português de Portugal, desafiante, sobre a linguagem {jogo}."
+    jogo = random.choice(GAMES_LIST2)  # Escolhe uma linguagem aleatoriamente
+    prompt = f"Uma frase curta em português de Portugal, com uma curiosidade ou facto interessante sobre programação (já programaste em {jogo}?))"
     
     try:
         model = genai.GenerativeModel("gemini-pro")
@@ -99,7 +99,7 @@ async def gerar_frase_desafiante():
         logger.error(f"Erro ao gerar frase: {e}")
         frase = "O silêncio na guerra também pode ser uma mensagem."
 
-    return f"🔹 Memórias de **{jogo}**: *{frase}*"
+    return f"🔹 **Curiosidade**: *{frase}*"
 
 # Função para mudar a atividade do bot para "playing <game>"
 async def change_activity_to_game():
@@ -246,9 +246,9 @@ async def coin(interaction: discord.Interaction):
         logger.error(traceback.format_exc())
 
 # Comando /send
-@bot.tree.command(name="mem", description="Envia uma frase enigmática sobre uma linguagem na sala lobby.")
+@bot.tree.command(name="mem", description="Envia uma curiosidade sobre programação na sala lobby.")
 async def send(interaction: discord.Interaction):
-    """Envia uma frase enigmática quando o comando /mem é acionado."""
+    """Envia uma curiosidade sobre programação quando o comando /mem é acionado."""
     try:
         channel = bot.get_channel(MAIN_CHANNEL_ID)
         if channel is None:
