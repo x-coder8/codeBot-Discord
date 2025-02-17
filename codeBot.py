@@ -87,9 +87,9 @@ async def generate_ai_message(prompt):
 
 # Função para gerar uma frase curiosa sobre uma linguagem
 async def gerar_frase_desafiante():
-    """Gera uma frase desafiante sobre uma linguagem aleatória."""
+    """Gera uma frase curiosa sobre uma linguagem aleatória."""
     jogo = random.choice(GAMES_LIST2)  # Escolhe uma linguagem aleatoriamente
-    prompt = f"Uma frase curta em português de Portugal, com uma curiosidade ou facto interessante sobre programação (já programaste em {jogo}?))"
+    prompt = f"Uma frase curta em português de Portugal, com uma curiosidade ou um facto interessante sobre linguagem de programação {jogo})"
     
     try:
         model = genai.GenerativeModel("gemini-pro")
@@ -99,7 +99,7 @@ async def gerar_frase_desafiante():
         logger.error(f"Erro ao gerar frase: {e}")
         frase = "O silêncio na guerra também pode ser uma mensagem."
 
-    return f"🔹 **Curiosidade**: *{frase}*"
+    return f"🔹***code**Facts*: *{frase}*"
 
 # Função para mudar a atividade do bot para "playing <game>"
 async def change_activity_to_game():
@@ -116,9 +116,9 @@ async def reset_activity():
     """Retorna a atividade do bot para o padrão."""
     try:
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="#code.lab"))
-        logger.info("Atividade resetada para 'watching #code.lab'")
+        logger.info("Atividade restaurada para 'watching #code.lab'")
     except Exception as e:
-        logger.error(f"Erro ao resetar atividade: {e}")
+        logger.error(f"Erro ao restaurar atividade: {e}")
 
 # Tarefa periódica para mudar a atividade do bot
 @tasks.loop(hours=1)
