@@ -6,14 +6,14 @@ Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O b
 
 ## Funcionalidades Principais
 
+- **Gerenciamento de Salas de Voz**: Renomeia salas de voz automaticamente com base no jogo que os utilizadores estão a jogar (activity).
 - **Envio de Mensagens Anónimas**: Administradores podem enviar mensagens anónimas em nome do bot, com ou sem anexos de imagem.
 - **Integração com IA**: Responde a mensagens quando o nome do bot é referido, usando a API do Gemini para gerar respostas dinâmicas.
-- **Gerenciamento de Salas de Voz**: Renomeia salas de voz automaticamente com base no jogo que os utilizadores estão a jogar (activity).
 - **Comandos de Moderação**: Inclui comandos como `ping` e `coin` para interação básica.
 - **Atividades Periódicas**: Muda a atividade do bot periodicamente para manter o servidor mais dinâmico.
 - **Envio de frases curiosas**: Envia frases curiosas sobre linguagens de programação, jogos, ou temas definidos.
 - **Mensagem de bem-vindo**: Envia mensagem de bem-vindo a novos membros.
-- **Mensagens de actividade e logs**: Envia mensagens para os canais específicos.
+- **Mensagens de actividade e logs**: Envia mensagens de log para os canais específicos.
 
 ## Como Usar
 
