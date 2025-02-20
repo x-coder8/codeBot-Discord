@@ -70,7 +70,7 @@ BOT_NAME = ["uB|codeBot", "ub|codebot", "codebot", "CodeBot", "CODEBOT"]
 STATIC_WELCOME_MESSAGE = "hey... , {member.mention}, bem-vindo/a ao Discord dos **#code.lab**! Para saberes mais sobre nós, passa na sala <#{os.getenv('INFO_CHANNEL_ID')}>"
 STATIC_MENTION_RESPONSE = "Olá, disseste o meu nome? Desculpa não poder dar atenção, neste momento estou um pouco ocupado... "
 
-# Lista de linguagens predefinidos para a atividade do bot
+# Lista de linguagens predefinidas para a atividade do bot
 GAMES_LIST = ["Python", "Rust", "Java Script", "Visual Studio Code", "PHP"]
 GAMES_LIST2 = ["Python", "Rust", "Java Script", "C++", "PHP"]
 
