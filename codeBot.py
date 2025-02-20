@@ -35,10 +35,10 @@ async def has_permissions(channel, permissions):
     return channel.permissions_for(channel.guild.me) >= permissions
 
 intents = discord.Intents.default()
-intents.members = True  # Para acessar informações dos membros
-intents.presences = True  # Para acessar atividades (presenças)
+intents.members = True  # Para aceder informações dos membros
+intents.presences = True  # Para aceder atividades (presenças)
 intents.voice_states = True  # Para monitorar estados de voz
-intents.message_content = True  # Para acessar conteúdo das mensagens
+intents.message_content = True  # Para aceder conteúdo das mensagens
 
 # Defina o command_prefix como uma string vazia ou um prefixo que não será usado
 bot = commands.Bot(command_prefix='', intents=intents)
@@ -70,7 +70,7 @@ BOT_NAME = ["uB|codeBot", "ub|codebot", "codebot", "CodeBot", "CODEBOT"]
 STATIC_WELCOME_MESSAGE = "hey... , {member.mention}, bem-vindo/a ao Discord dos **#code.lab**! Para saberes mais sobre nós, passa na sala <#{os.getenv('INFO_CHANNEL_ID')}>"
 STATIC_MENTION_RESPONSE = "Olá, disseste o meu nome? Desculpa não poder dar atenção, neste momento estou um pouco ocupado... "
 
-# Lista de jogos predefinidos para a atividade do bot
+# Lista de linguagens predefinidos para a atividade do bot
 GAMES_LIST = ["Python", "Rust", "Java Script", "Visual Studio Code", "PHP"]
 GAMES_LIST2 = ["Python", "Rust", "Java Script", "C++", "PHP"]
 
