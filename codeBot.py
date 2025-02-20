@@ -1,3 +1,5 @@
+### Discord codeBot by Shadowչ (x.coder) ###
+
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
