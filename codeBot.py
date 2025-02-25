@@ -132,7 +132,7 @@ async def check_voice_channels():
             channel = bot.get_channel(channel_id)
             if channel and not channel.members:
                 await channel.edit(name=original_name)
-                logger.info(f'{channel.name} restaurado ao nome original.')
+                logger.info(f'{channel.name} (verificação e restauração do nome original).')
     except Exception as e:
         logger.error(f'Erro ao verificar salas de voz: {e}')
 
