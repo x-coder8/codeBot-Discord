@@ -199,8 +199,8 @@ async def coin(interaction: discord.Interaction):
     except Exception as e:
         logger.error(f'Erro no comando coin: {e}')
 
-# Comando /mem
-@bot.tree.command(name="mem", description="Envia uma curiosidade sobre programação na sala lobby.")
+# Comando /tips
+@bot.tree.command(name="tips", description="Envia uma dica sobre programação na sala lobby.")
 async def send(interaction: discord.Interaction):
     try:
         await interaction.response.defer(ephemeral=True)
