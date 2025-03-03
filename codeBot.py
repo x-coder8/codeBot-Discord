@@ -200,14 +200,14 @@ async def coin(interaction: discord.Interaction):
         logger.error(f'Erro no comando coin: {e}')
 
 # Comando /tips
-@bot.tree.command(name="tips", description="Envia uma dica sobre programação na sala lobby.")
+@bot.tree.command(name="tips", description="Envia uma dica sobre programação no canal atual.")
 async def send(interaction: discord.Interaction):
     try:
         await interaction.response.defer(ephemeral=True)
         
-        channel = CHANNEL_CACHE.get('main')
+        channel = interaction.channel
         if not channel:
-            await interaction.followup.send("Erro: Canal não encontrado.", ephemeral=True)
+            await interaction.followup.send("Erro: Não consigo encontrar o canal atual.", ephemeral=True)
             return
         
         frase = await gerar_frase_desafiante()
