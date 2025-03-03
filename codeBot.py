@@ -24,7 +24,7 @@ logger = logging.getLogger()
 
 # Configurar API do Gemini e criar modelo global
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-GEMINI_MODEL = genai.GenerativeModel("gemini-pro")
+GEMINI_MODEL = genai.GenerativeModel("gemini-2.0-flash-lite")
 
 # Classe para centralizar configurações
 class Config:
