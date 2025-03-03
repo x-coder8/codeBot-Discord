@@ -24,7 +24,6 @@ logger = logging.getLogger()
 
 # Configurar API do Gemini e criar modelo global
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-#GEMINI_MODEL = genai.GenerativeModel("gemini-pro")
 GEMINI_MODEL = genai.GenerativeModel("gemini-2.0-flash-lite")
 
 # Classe para centralizar configurações
@@ -78,7 +77,6 @@ async def generate_ai_message(prompt):
 # Função para gerar uma frase curiosa sobre uma linguagem
 async def gerar_frase_desafiante():
     jogo = random.choice(Config.GAMES_LIST2)
-    #prompt = f"Uma frase curta em português de Portugal, com uma curiosidade ou facto interessante sobre a linguagem de programação {jogo}"
     prompt = f"És um especialista em linguagens de programação, escreve uma pequena frase, em português de Portugal, útil sobre técnicas de programação em {jogo}, sem emoji's."
     try:
         response = GEMINI_MODEL.generate_content(prompt)
