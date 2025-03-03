@@ -11,7 +11,7 @@ Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O b
 - **Integração com IA**: Responde a mensagens quando o nome do bot é referido, usando a API do Gemini (ou outra) para gerar respostas dinâmicas.
 - **Comandos de Moderação**: Inclui comandos como `ping` e `coin` para interação básica.
 - **Atividades Periódicas**: Muda a atividade do bot periodicamente para manter o servidor mais dinâmico.
-- **Envio de frases curiosas**: Envia frases curiosas sobre linguagens de programação, jogos, ou temas definidos.
+- **Envio de frases curiosas**: Envia frase com dicas sobre linguagens de programação (ou outros temas definidos).
 - **Mensagem de bem-vindo**: Envia mensagem de bem-vindo a novos membros.
 - **Mensagens de actividade e logs**: Envia mensagens de log para os canais específicos.
 
