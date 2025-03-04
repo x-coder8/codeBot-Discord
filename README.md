@@ -1,8 +1,8 @@
 # codeBot - Discord by Shadowչ (x.coder)
 
-Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O bot oferece funcionalidades como envio de mensagens anónimas, integração com IA (Gemini API, ou outras), salas de voz dinâmicas, e muito mais.
+Um bot para Discord desenvolvido em Python usando a biblioteca `discord.py`. O bot oferece funcionalidades como envio de mensagens anónimas, integração com AI (Gemini API, ou outras), salas de voz dinâmicas, e muito mais.
 
-**Discord #code.lab** ( https://discord.gg/2js9vZMPF3 )
+**Discord #code.lab** ( Live demo - https://discord.gg/2js9vZMPF3 )
 
 ## Funcionalidades Principais
 
