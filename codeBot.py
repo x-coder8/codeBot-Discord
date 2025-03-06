@@ -13,8 +13,9 @@ from functools import lru_cache
 from discord.utils import sleep_until
 from datetime import datetime, timedelta
 
+# Amigável com caracteres especiais
 import sys
-sys.stdout.reconfigure(encoding='utf-8') # Amigável com caracteres especiais
+sys.stdout.reconfigure(encoding='utf-8')
 
 # Carrega variáveis de ambiente
 load_dotenv()
