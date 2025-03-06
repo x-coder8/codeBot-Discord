@@ -3,13 +3,18 @@
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
-import traceback
 import asyncio
 import random
 import os
 import logging
 import google.generativeai as genai
 from dotenv import load_dotenv
+from functools import lru_cache
+from discord.utils import sleep_until
+from datetime import datetime, timedelta
+
+import sys
+sys.stdout.reconfigure(encoding='utf-8') # Amigável com caracteres especiais
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -28,16 +33,16 @@ GEMINI_MODEL = genai.GenerativeModel("gemini-2.0-flash-lite")
 
 # Classe para centralizar configurações
 class Config:
+    voice_channel_ids = [int(os.getenv(f'VOICE_CHANNEL_{i}_ID', '0')) for i in range(1, 5) if os.getenv(f'VOICE_CHANNEL_{i}_ID')]
     VOICE_CHANNELS = dict(zip(
-        [int(os.getenv(f'VOICE_CHANNEL_{i}_ID')) for i in range(1, 5)],
-        ["Chill Out 1", "Chill Out 2", "Studio 1", "Studio 2"]
+        voice_channel_ids,
+        ["Chill Out 1", "Chill Out 2", "Studio 1", "Studio 2"][:len(voice_channel_ids)]
     ))
     CHANNELS = {
         'text': int(os.getenv("TEXT_CHANNEL_ID", 0)),
         'main': int(os.getenv("MAIN_CHANNEL_ID", 0)),
         'logs': int(os.getenv("LOGS_CHANNEL_ID", 0)),
     }
-    BOT_NAMES = ["ub|codebot", "codebot"]
     GAMES_LIST = ["Python", "Rust", "Java Script", "Visual Studio Code", "PHP"]
     GAMES_LIST2 = ["Python", "Rust", "Java Script", "C++", "PHP"]
     STATIC_WELCOME = f"hey... , {{member.mention}}, bem-vindo/a ao Discord do **#code.lab**! Para saberes mais sobre nós, passa na sala <#{os.getenv('INFO_CHANNEL_ID')}>"
@@ -46,12 +51,10 @@ class Config:
 # Cache global para canais
 CHANNEL_CACHE = {}
 
-# Função para validar variáveis de ambiente
-def get_env_variable(key, default=None):
-    value = os.getenv(key, default)
-    if value is None:
-        raise ValueError(f"A variável de ambiente {key} não está definida.")
-    return value
+# Função para atualizar o cache de canais
+async def update_channel_cache():
+    for key, channel_id in Config.CHANNELS.items():
+        CHANNEL_CACHE[key] = bot.get_channel(channel_id) or await bot.fetch_channel(channel_id)
 
 # Função para verificar permissões
 async def has_permissions(channel, permissions):
@@ -65,26 +68,28 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix='', intents=intents)
 
-# Função para gerar mensagem dinâmica com IA
+# Função para gerar mensagem dinâmica IA com cache
+@lru_cache(maxsize=100)
+def cached_generate(prompt):
+    response = GEMINI_MODEL.generate_content(prompt)
+    return response.text
+
 async def generate_ai_message(prompt):
     try:
-        response = GEMINI_MODEL.generate_content(prompt)
-        return response.text
-    except Exception as e:
-        logger.error(f"Erro ao gerar mensagem com IA: {e}")
+        return cached_generate(prompt)
+    except genai.GenerationError as e:
+        logger.error(f"Erro na API Gemini: {e}")
+        return None
+    except ValueError as e:
+        logger.error(f"Prompt inválido: {e}")
         return None
 
-# Função para gerar uma frase curiosa sobre uma linguagem
+# Função para gerar uma dica útil
 async def gerar_frase_desafiante():
     jogo = random.choice(Config.GAMES_LIST2)
     prompt = f"És um especialista em linguagens de programação, escreve uma pequena frase, em português de Portugal, útil sobre técnicas de programação em {jogo}, sem emoji's."
-    try:
-        response = GEMINI_MODEL.generate_content(prompt)
-        frase = response.text.strip() if response.text else "Não consegui gerar uma frase."
-    except Exception as e:
-        logger.error(f"Erro ao gerar frase: {e}")
-        frase = "O silêncio na guerra também pode ser uma mensagem."
-    return f"🔹***code**Tips*: *{frase}*"
+    frase = await generate_ai_message(prompt) or "O silêncio na guerra também pode ser uma mensagem."
+    return f"🔹***code**Tips*: _{frase}_"
 
 # Função para mudar a actividade do bot
 async def change_activity_to_game():
@@ -92,7 +97,7 @@ async def change_activity_to_game():
     try:
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name=game))
         logger.info(f"Actividade alterada para 'playing {game}'")
-    except Exception as e:
+    except discord.HTTPException as e:
         logger.error(f"Erro ao alterar actividade: {e}")
 
 # Função para restaurar a actividade padrão
@@ -100,57 +105,66 @@ async def reset_activity():
     try:
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="#code.lab"))
         logger.info("Actividade restaurada para 'watching #code.lab'")
-    except Exception as e:
+    except discord.HTTPException as e:
         logger.error(f"Erro ao restaurar actividade: {e}")
 
 # Tarefa cíclica para gerir a actividade
-@tasks.loop(minutes=60)  # A cada hora
+@tasks.loop(minutes=60)
 async def activity_cycle():
+    if activity_cycle.is_running() and activity_cycle.current_loop == 0:
+        await asyncio.sleep(5)
     await change_activity_to_game()
     logger.info("Actividade será restaurada em 20 minutos.")
     await asyncio.sleep(1200)  # Espera 20 minutos
     await reset_activity()
 
-# Função para renomear salas de voz
-async def rename_voice_channel(channel, game):
-    if game:
-        try:
-            await channel.edit(name=game)
-            logger.info(f'Sala {channel.name} renomeada para {game}')
+# Função para renomear salas de voz com atraso controlado
+async def safe_channel_edit(channel, name):
+    try:
+        if channel.name != name:  # Só edita se o nome for diferente
+            await channel.edit(name=name)
+            logger.info(f'Sala {channel.name} renomeada para {name}')
+            await sleep_until(datetime.now() + timedelta(seconds=2))
             return True
-        except discord.Forbidden:
-            logger.error(f'Sem permissões para renomear {channel.name}')
-        except Exception as e:
-            logger.error(f"Erro ao renomear sala de voz: {e}")
+        return False
+    except discord.Forbidden:
+        logger.error(f'Sem permissões para renomear {channel.name}')
+    except discord.HTTPException as e:
+        logger.error(f"Erro ao renomear sala de voz: {e}")
     return False
 
 # Tarefa periódica para verificar salas de voz
 @tasks.loop(minutes=20)
 async def check_voice_channels():
+    if check_voice_channels.current_loop == 0:
+        await asyncio.sleep(10)  # Atraso inicial de 10 segundos
     try:
         for channel_id, original_name in Config.VOICE_CHANNELS.items():
             channel = bot.get_channel(channel_id)
-            if channel and not channel.members:
-                await channel.edit(name=original_name)
-                logger.info(f'{channel.name} (verificação e restauração do nome original).')
-    except Exception as e:
+            if channel and not channel.members and channel.name != original_name:
+                if await safe_channel_edit(channel, original_name):
+                    logger.info(f'{channel.name} restaurado para {original_name}')
+    except discord.HTTPException as e:
         logger.error(f'Erro ao verificar salas de voz: {e}')
+        check_voice_channels.restart()
 
 # Tarefa periódica para limpar canal de actividade
 @tasks.loop(minutes=20)
 async def cleanup_activity_channel():
+    if cleanup_activity_channel.is_running() and cleanup_activity_channel.current_loop == 0:
+        await asyncio.sleep(5)
     try:
         channel = CHANNEL_CACHE.get('text')
-        if channel:
+        if channel and await has_permissions(channel, discord.Permissions(manage_messages=True)):
             messages = [msg async for msg in channel.history(limit=100)]
             if len(messages) > 20:
                 for msg in messages[20:]:
                     await msg.delete()
                 logger.info('Removidas mensagens antigas no canal activity.')
-    except Exception as e:
+    except discord.HTTPException as e:
         logger.error(f'Erro ao limpar mensagens antigas: {e}')
 
-# Função para obter o jogo atual de um membro
+# Função para obter a actividade atual do utilizador
 def get_current_game(member: discord.Member) -> str:
     for activity in member.activities:
         if activity.type == discord.ActivityType.playing:
@@ -161,24 +175,19 @@ def get_current_game(member: discord.Member) -> str:
 
 @bot.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
-    try:
-        if after.channel and after.channel.id in Config.VOICE_CHANNELS:
-            game = get_current_game(member)
-            if await rename_voice_channel(after.channel, game):
-                text_channel = CHANNEL_CACHE.get('text')
-                if text_channel:
-                    await text_channel.send(f'{member.display_name} iniciou {game} numa sala de voz. Junta-te ao desafio!')
-        
-        if before.channel and not after.channel and before.channel.id in Config.VOICE_CHANNELS:
-            if not before.channel.members:
-                original_name = Config.VOICE_CHANNELS.get(before.channel.id)
-                if original_name:
-                    await before.channel.edit(name=original_name)
-                    logger.info(f'{before.channel.name} voltou ao nome original: {original_name}')
-    except discord.Forbidden:
-        logger.error(f'Sem permissões para renomear sala para {member.id}')
-    except Exception as e:
-        logger.error(f'Erro no on_voice_state_update: {e}')
+    voice_channel_ids = Config.VOICE_CHANNELS.keys()
+    
+    if after.channel and after.channel.id in voice_channel_ids:
+        game = get_current_game(member)
+        if game and await safe_channel_edit(after.channel, game):
+            text_channel = CHANNEL_CACHE.get('text')
+            if text_channel and await has_permissions(text_channel, discord.Permissions(send_messages=True)):
+                await text_channel.send(f'{member.display_name} iniciou {game} numa sala de voz. Junta-te ao desafio!')
+    
+    if before.channel and not after.channel and before.channel.id in voice_channel_ids and not before.channel.members:
+        original_name = Config.VOICE_CHANNELS.get(before.channel.id)
+        if original_name:
+            await safe_channel_edit(before.channel, original_name)
 
 # Comando /ping
 @bot.tree.command(name="ping", description="Responde com a latência do bot.")
@@ -186,7 +195,7 @@ async def ping(interaction: discord.Interaction):
     try:
         latency = bot.latency * 1000
         await interaction.response.send_message(f'Pong! Latência: {latency:.2f}ms')
-    except Exception as e:
+    except discord.HTTPException as e:
         logger.error(f'Erro no comando ping: {e}')
 
 # Comando /coin
@@ -196,7 +205,7 @@ async def coin(interaction: discord.Interaction):
     try:
         outcome = '**Cara**' if random.randint(0, 1) == 0 else '**Coroa**'
         await interaction.response.send_message(f'A moeda rodou, e caiu em {outcome}')
-    except Exception as e:
+    except discord.HTTPException as e:
         logger.error(f'Erro no comando coin: {e}')
 
 # Comando /tips
@@ -204,25 +213,23 @@ async def coin(interaction: discord.Interaction):
 async def send(interaction: discord.Interaction):
     try:
         await interaction.response.defer(ephemeral=True)
-        
         channel = interaction.channel
-        if not channel:
-            await interaction.followup.send("Erro: Não consigo encontrar o canal atual.", ephemeral=True)
+        if not channel or not await has_permissions(channel, discord.Permissions(send_messages=True)):
+            await interaction.followup.send("Erro: Não consigo enviar mensagens neste canal.", ephemeral=True)
             return
-        
         frase = await gerar_frase_desafiante()
         await channel.send(frase)
         await interaction.followup.send("Frase enviada com sucesso!", ephemeral=True)
-    except Exception as e:
+    except discord.HTTPException as e:
         logger.error(f"Erro ao enviar frase: {e}")
         await interaction.followup.send("Ocorreu um erro ao enviar a frase.", ephemeral=True)
 
 # Comando /say
 def is_admin(interaction: discord.Interaction) -> bool:
-    return any(role.id == int(get_env_variable('ADMIN_ROLE_ID')) for role in interaction.user.roles)
+    return any(role.id == int(os.getenv('ADMIN_ROLE_ID', 0)) for role in interaction.user.roles)
 
 class SayModal(discord.ui.Modal, title="Enviar Mensagem Anónima"):
-    mensagem = discord.ui.TextInput(label="Mensagem", style=discord.TextStyle.paragraph, required=True)
+    mensagem = discord.ui.TextInput(label="Mensagem", style=discord.TextStyle.paragraph, required=True, max_length=2000)
 
     async def on_submit(self, interaction: discord.Interaction):
         if not await has_permissions(interaction.channel, discord.Permissions(send_messages=True)):
@@ -237,7 +244,7 @@ class SayModal(discord.ui.Modal, title="Enviar Mensagem Anónima"):
             )
             view.message = await interaction.original_response()
             await view.wait()
-        except Exception as e:
+        except discord.HTTPException as e:
             logger.error(f"Erro no envio do modal: {e}")
             await interaction.response.send_message("❌ Ocorreu um erro ao processar a mensagem.", ephemeral=True)
 
@@ -277,7 +284,7 @@ class UploadView(discord.ui.View):
             await self.send_message(interaction, file=file)
         except asyncio.TimeoutError:
             await self.send_feedback(interaction, "❌ O tempo para enviar a imagem expirou.")
-        except Exception as e:
+        except discord.HTTPException as e:
             await self.send_feedback(interaction, f"❌ Erro ao processar a imagem: {str(e)}")
 
     @discord.ui.button(label="📨 Enviar Sem Imagem", style=discord.ButtonStyle.secondary)
@@ -304,27 +311,28 @@ async def say_error(interaction: discord.Interaction, error: app_commands.AppCom
 async def on_ready():
     logger.info(f'Bot conectado como {bot.user}')
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="#code.lab"))
-
-    # Cachear canais
-    CHANNEL_CACHE['text'] = bot.get_channel(Config.CHANNELS['text'])
-    CHANNEL_CACHE['main'] = bot.get_channel(Config.CHANNELS['main'])
-    CHANNEL_CACHE['logs'] = bot.get_channel(Config.CHANNELS['logs'])
-
+    
+    await update_channel_cache()
+    
     try:
         synced = await bot.tree.sync()
         logger.info(f'Sincronizados {len(synced)} comandos: {[cmd.name for cmd in synced]}')
-    except Exception as e:
+    except discord.HTTPException as e:
         logger.error(f'Erro ao sincronizar comandos: {e}')
-
+    
     try:
-        if not check_voice_channels.is_running():
-            check_voice_channels.start()
-        if not cleanup_activity_channel.is_running():
-            cleanup_activity_channel.start()
-        if not activity_cycle.is_running():
-            activity_cycle.start()
-        logger.info("Tarefas periódicas iniciadas.")
-    except Exception as e:
+        # Dicionário de nomes descritivos
+        task_names = {
+            'check_voice_channels': 'verificação de canais de voz',
+            'cleanup_activity_channel': 'limpar mensagens',
+            'activity_cycle': 'ciclo de atividade'
+        }
+        for task in [check_voice_channels, cleanup_activity_channel, activity_cycle]:
+            if not task.is_running():
+                task.start()
+                task_name = task_names[task.coro.__name__]
+                logger.info(f"Tarefa {task_name} iniciada.")
+    except RuntimeError as e:
         logger.error(f'Erro ao iniciar tarefas: {e}')
 
 @bot.event
@@ -332,28 +340,44 @@ async def on_message(message):
     if message.author.bot:
         return
     content = message.content.lower()
-    if bot.user.mentioned_in(message) or "codebot" in content:
-        prompt = f"imagina-te o codeBot, mestre da programação, membro principal do **#code.lab**, e dá uma pequena resposta em português de Portugal à mensagem de {message.author.name}: {message.content}"
+    if bot.user.mentioned_in(message) or "sentry" in content or "codebot" in content: # Nomes aos quais o bot vai responder quando mencionados
+        prompt = f"imagina-te o codeBot, mestre da programação. Escreve uma pequena resposta em português de Portugal à mensagem, sem começar com 'Olá': {message.content}"
         ai_message = await generate_ai_message(prompt)
-        await message.channel.send(ai_message if ai_message else Config.STATIC_MENTION)
+        try:
+            final_message = f"Olá, {message.author.display_name}! {ai_message}" if ai_message else Config.STATIC_MENTION
+            if await has_permissions(message.channel, discord.Permissions(send_messages=True)):
+                await message.channel.send(final_message)
+        except discord.Forbidden:
+            logger.error("Erro: O bot não tem permissões para enviar mensagens neste canal")
+        except discord.HTTPException as e:
+            logger.error(f"Erro HTTP ao enviar mensagem: {e}")
 
 @bot.event
 async def on_member_join(member):
     channel = CHANNEL_CACHE.get('main')
-    if channel:
-        prompt = f"imagina-te o codeBot, mestre da programação. Escreve uma pequena frase de bem-vindo/a em português de Portugal, a tratar por tu, como neste exemplo: 'Olá, {member.mention}, bem-vindo/a ao Discord do **#code.lab**! Para saberes mais sobre nós, passa na sala <#{os.getenv('INFO_CHANNEL_ID')}>.'"
+    if channel and await has_permissions(channel, discord.Permissions(send_messages=True)):
+
+        prompt = f"""
+    Gere uma mensagem de boas-vindas para um novo membro do servidor Discord "#code.lab". A mensagem deve incluir:
+
+    * Uma saudação amigável em português de Portugal("Olá")
+    * A menção do novo membro usando {member.mention}
+    * O nome do servidor em negrito ("**#code.lab**")
+    * Uma instrução para visitar o canal de informações, usando o ID do canal obtido da variável de ambiente INFO_CHANNEL_ID (<#{os.getenv('INFO_CHANNEL_ID')}>)
+    * A mensagem pode ser dada no tema "programação", mas identica a esta: Olá {member.mention}, bem-vindo/a ao Discord do **code.lab**! Para saberes mais sobre nós, passa na sala <#{os.getenv('INFO_CHANNEL_ID')}>"
+    """
         ai_message = await generate_ai_message(prompt)
         await channel.send(ai_message if ai_message else Config.STATIC_WELCOME.format(member=member))
     
     log_channel = CHANNEL_CACHE.get('logs')
-    if log_channel:
-        await log_channel.send(f"🔹 O utilizador **{member.name}** entrou no servidor.")
+    if log_channel and await has_permissions(log_channel, discord.Permissions(send_messages=True)):
+        await log_channel.send(f"🔹 O utilizador **{member.display_name}** entrou no servidor.")
 
 @bot.event
 async def on_member_remove(member):
     log_channel = CHANNEL_CACHE.get('logs')
-    if log_channel:
-        await log_channel.send(f"🔸 O utilizador **{member.name}** saiu do servidor.")
+    if log_channel and await has_permissions(log_channel, discord.Permissions(send_messages=True)):
+        await log_channel.send(f"🔸 O utilizador **{member.display_name}** saiu do servidor.")
 
 # Iniciar o bot
-bot.run(get_env_variable('DISCORD_TOKEN'))
+bot.run(os.getenv('DISCORD_TOKEN', ''))
