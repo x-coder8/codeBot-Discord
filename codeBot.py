@@ -10,12 +10,7 @@ import logging
 import google.generativeai as genai
 from dotenv import load_dotenv
 from functools import lru_cache
-from discord.utils import sleep_until
 from datetime import datetime, timedelta
-
-# Amigável com caracteres especiais
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -53,7 +48,7 @@ class Config:
 CHANNEL_CACHE = {}
 
 # Função para atualizar o cache de canais
-async def update_channel_cache():
+async def update_channel_cache(bot):
     for key, channel_id in Config.CHANNELS.items():
         CHANNEL_CACHE[key] = bot.get_channel(channel_id) or await bot.fetch_channel(channel_id)
 
@@ -83,6 +78,9 @@ async def generate_ai_message(prompt):
         return None
     except ValueError as e:
         logger.error(f"Prompt inválido: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Erro inesperado: {e}")
         return None
 
 # Função para gerar uma dica útil
@@ -125,7 +123,7 @@ async def safe_channel_edit(channel, name):
         if channel.name != name:  # Só edita se o nome for diferente
             await channel.edit(name=name)
             logger.info(f'Sala {channel.name} renomeada para {name}')
-            await sleep_until(datetime.now() + timedelta(seconds=2))
+            await asyncio.sleep(2)  # Aguarda 2 segundos
             return True
         return False
     except discord.Forbidden:
@@ -140,11 +138,12 @@ async def check_voice_channels():
     if check_voice_channels.current_loop == 0:
         await asyncio.sleep(10)  # Atraso inicial de 10 segundos
     try:
+        tasks = []
         for channel_id, original_name in Config.VOICE_CHANNELS.items():
             channel = bot.get_channel(channel_id)
             if channel and not channel.members and channel.name != original_name:
-                if await safe_channel_edit(channel, original_name):
-                    logger.info(f'{channel.name} restaurado para {original_name}')
+                tasks.append(safe_channel_edit(channel, original_name))
+        await asyncio.gather(*tasks)
     except discord.HTTPException as e:
         logger.error(f'Erro ao verificar salas de voz: {e}')
         check_voice_channels.restart()
@@ -298,7 +297,7 @@ class UploadView(discord.ui.View):
         if self.message:
             await self.message.edit(content="❌ Tempo esgotado. Ação cancelada.", view=None)
 
-@bot.tree.command(name="say", description="Envia uma mensagem anonimamente")
+@bot.tree.command(name="say", description="Envia uma mensagem anonimamente.")
 @app_commands.check(is_admin)
 async def say(interaction: discord.Interaction):
     await interaction.response.send_modal(SayModal())
@@ -313,7 +312,7 @@ async def on_ready():
     logger.info(f'Bot conectado como {bot.user}')
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="#code.lab"))
     
-    await update_channel_cache()
+    await update_channel_cache(bot)
     
     try:
         synced = await bot.tree.sync()
