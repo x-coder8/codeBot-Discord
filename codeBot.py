@@ -173,9 +173,9 @@ async def check_voice_channels_periodically():
 def get_current_game(member: discord.Member) -> str:
     for activity in member.activities:
         if activity.type == discord.ActivityType.playing:
-            logger.info(f'{member.display_name} está a jogar {activity.name}')
+            logger.info(f'{member.display_name} está com a actividade: {activity.name}')
             return activity.name
-    logger.info(f'{member.display_name} não está a jogar nada.')
+    logger.info(f'{member.display_name} não está com nenhuma actividade.')
     return None
 
 @bot.event
