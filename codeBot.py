@@ -134,35 +134,40 @@ async def safe_channel_edit(channel, name):
 
 # Tarefa periódica para verificar salas de voz
 @tasks.loop(minutes=20)
-async def check_voice_channels():
-    if check_voice_channels.current_loop == 0:
-        await asyncio.sleep(10)  # Atraso inicial de 10 segundos
+async def check_voice_channels_periodically():
     try:
-        tasks = []
         for channel_id, original_name in Config.VOICE_CHANNELS.items():
             channel = bot.get_channel(channel_id)
-            if channel and not channel.members and channel.name != original_name:
-                tasks.append(safe_channel_edit(channel, original_name))
-        await asyncio.gather(*tasks)
-    except discord.HTTPException as e:
-        logger.error(f'Erro ao verificar salas de voz: {e}')
-        check_voice_channels.restart()
-
-# Tarefa periódica para limpar canal de actividade
-@tasks.loop(minutes=20)
-async def cleanup_activity_channel():
-    if cleanup_activity_channel.is_running() and cleanup_activity_channel.current_loop == 0:
-        await asyncio.sleep(5)
-    try:
-        channel = CHANNEL_CACHE.get('text')
-        if channel and await has_permissions(channel, discord.Permissions(manage_messages=True)):
-            messages = [msg async for msg in channel.history(limit=100)]
-            if len(messages) > 20:
-                for msg in messages[20:]:
-                    await msg.delete()
-                logger.info('Removidas mensagens antigas no canal activity.')
-    except discord.HTTPException as e:
-        logger.error(f'Erro ao limpar mensagens antigas: {e}')
+            if channel and channel.members:  # Verifica apenas salas ocupadas
+                members = channel.members
+                games = {}
+                
+                # Contabiliza a actividade de cada utilizador
+                for member in members:
+                    game = get_current_game(member)
+                    if game:
+                        games[game] = games.get(game, 0) + 1
+                
+                # Determina a actividade em maioria >50%
+                if games:
+                    most_common_game = max(games, key=games.get)
+                    if await safe_channel_edit(channel, most_common_game):
+                        text_channel = CHANNEL_CACHE.get('text')
+                        if text_channel and await has_permissions(text_channel, discord.Permissions(send_messages=True)):
+                            if len(members) == 1:
+                                # Primeiro utilizador na sala
+                                await text_channel.send(f'{members[0].display_name} iniciou {most_common_game} numa sala de voz. Junta-te ao desafio!')
+                            else:
+                                # Outros utilizadores que entram na sala
+                                await text_channel.send(f'{members[-1].display_name} juntou-se à sala {most_common_game} numa sala de voz. Junta-te ao desafio!')
+                else:
+                    # Se ninguém estiver sala, restaura o nome original
+                    if await safe_channel_edit(channel, original_name):
+                        text_channel = CHANNEL_CACHE.get('text')
+                        if text_channel and await has_permissions(text_channel, discord.Permissions(send_messages=True)):
+                            await text_channel.send(f'A sala {channel.name} foi restaurada para o nome original "{original_name}".')
+    except Exception as e:
+        logger.error(f"Erro na verificação periódica de salas de voz: {e}")
 
 # Função para obter a actividade atual do utilizador
 def get_current_game(member: discord.Member) -> str:
@@ -177,17 +182,38 @@ def get_current_game(member: discord.Member) -> str:
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
     voice_channel_ids = Config.VOICE_CHANNELS.keys()
     
+    # Quando um utilizador entra numa sala de voz
     if after.channel and after.channel.id in voice_channel_ids:
-        game = get_current_game(member)
-        if game and await safe_channel_edit(after.channel, game):
-            text_channel = CHANNEL_CACHE.get('text')
-            if text_channel and await has_permissions(text_channel, discord.Permissions(send_messages=True)):
-                await text_channel.send(f'{member.display_name} iniciou {game} numa sala de voz. Junta-te ao desafio!')
+        # Verifica todos os utilizadores na sala
+        members = after.channel.members
+        games = {}
+        
+        # Contabiliza a actividade de cada utilizador
+        for member in members:
+            game = get_current_game(member)
+            if game:
+                games[game] = games.get(game, 0) + 1
+        
+        # Determina a actividade em maioria >50%
+        if games:
+            most_common_game = max(games, key=games.get)
+            if await safe_channel_edit(after.channel, most_common_game):
+                text_channel = CHANNEL_CACHE.get('text')
+                if text_channel and await has_permissions(text_channel, discord.Permissions(send_messages=True)):
+                    if len(members) == 1:
+                        # Primeiro utilizador na sala
+                        await text_channel.send(f'{member.display_name} iniciou {most_common_game} numa sala de voz. Junta-te ao desafio!')
+                    else:
+                        # Outros utilizadores que entram na sala
+                        await text_channel.send(f'{member.display_name} juntou-se à sala {most_common_game} numa sala de voz. Junta-te ao desafio!')
     
-    if before.channel and not after.channel and before.channel.id in voice_channel_ids and not before.channel.members:
-        original_name = Config.VOICE_CHANNELS.get(before.channel.id)
-        if original_name:
-            await safe_channel_edit(before.channel, original_name)
+    # Quando um utilizador sai de uma sala de voz
+    if before.channel and not after.channel and before.channel.id in voice_channel_ids:
+        # Se ninguém estiver sala, restaura o nome original
+        if not before.channel.members:
+            original_name = Config.VOICE_CHANNELS.get(before.channel.id)
+            if original_name:
+                await safe_channel_edit(before.channel, original_name)
 
 # Comando /ping
 @bot.tree.command(name="ping", description="Responde com a latência do bot.")
@@ -321,13 +347,12 @@ async def on_ready():
         logger.error(f'Erro ao sincronizar comandos: {e}')
     
     try:
-        # Dicionário de nomes descritivos
+        # Iniciar tarefas periódicas
         task_names = {
-            'check_voice_channels': 'verificação de canais de voz',
-            'cleanup_activity_channel': 'limpar mensagens',
-            'activity_cycle': 'ciclo de atividade'
+            'activity_cycle': 'ciclo de atividade',
+            'check_voice_channels_periodically': 'verificação periódica de salas de voz'
         }
-        for task in [check_voice_channels, cleanup_activity_channel, activity_cycle]:
+        for task in [activity_cycle, check_voice_channels_periodically]:
             if not task.is_running():
                 task.start()
                 task_name = task_names[task.coro.__name__]
