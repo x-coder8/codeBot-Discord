@@ -86,7 +86,7 @@ async def generate_ai_message(prompt):
 # Função para gerar uma dica útil
 async def gerar_frase_desafiante():
     jogo = random.choice(Config.GAMES_LIST2)
-    prompt = f"És um especialista em linguagens de programação, escreve uma pequena frase, em português de Portugal, útil sobre técnicas de programação em {jogo}, sem emoji's."
+    prompt = f"És um veterano especialista em linguagens de programação. Cria uma frase sobre técnicas de programação. Mantém a frase informativa."
     frase = await generate_ai_message(prompt) or "O silêncio na guerra também pode ser uma mensagem."
     return f"🔹***code**Tips*: _{frase}_"
 
