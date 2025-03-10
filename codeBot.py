@@ -365,11 +365,12 @@ async def on_message(message):
     if message.author.bot:
         return
     content = message.content.lower()
-    if bot.user.mentioned_in(message) or "sentry" in content or "codebot" in content: # Nomes aos quais o bot vai responder quando mencionados
-        prompt = f"imagina-te o codeBot, mestre da programação. Escreve uma pequena resposta em português de Portugal à mensagem, sem começar com 'Olá': {message.content}"
+    triggers = ["sentry", "codebot"]  # Define os triggers para gerar resposta
+    if bot.user.mentioned_in(message) or any(trigger in content for trigger in triggers):
+        prompt = f"Imagina-te o codeBot, especialista em linguagens de programação. Responde de forma natural à mensagem '{message.content}' em português de Portugal, de forma natural, sem incluir saudações como 'Olá' ou o nome do utilizador. Começar a frase com letra minúscula."
         ai_message = await generate_ai_message(prompt)
         try:
-            final_message = f"Olá, {message.author.display_name}! {ai_message}" if ai_message else Config.STATIC_MENTION
+            final_message = f"Olá {message.author.display_name}, {ai_message}" if ai_message else Config.STATIC_MENTION
             if await has_permissions(message.channel, discord.Permissions(send_messages=True)):
                 await message.channel.send(final_message)
         except discord.Forbidden:
