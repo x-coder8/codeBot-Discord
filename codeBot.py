@@ -370,7 +370,7 @@ async def on_message(message):
         prompt = f"Imagina-te o codeBot, especialista em linguagens de programação. Responde de forma natural à mensagem '{message.content}' em português de Portugal, de forma natural, sem incluir saudações como 'Olá' ou o nome do utilizador. Começar a frase com letra minúscula."
         ai_message = await generate_ai_message(prompt)
         try:
-            final_message = f"Olá {message.author.display_name}, {ai_message}" if ai_message else Config.STATIC_MENTION
+            final_message = f"Olá {message.author.display_name}, {ai_message}" if ai_message else Config.STATIC_MENTION # Código adicional para ter em conta os caracteres especiais no nick do utilizador.
             if await has_permissions(message.channel, discord.Permissions(send_messages=True)):
                 await message.channel.send(final_message)
         except discord.Forbidden:
